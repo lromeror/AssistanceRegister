@@ -6,13 +6,14 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+import axios from 'axios';
 
-const FormularioUsuario = ({ selectedUser }) => {
+const FormularioUsuario = ({ selectedUser, fetchData }) => {
   const [usuario, setUsuario] = useState({
     nombre: '',
     apellido: '',
-    telefono: '',
-    correo: '',
+    telefono_movil: '',
+    correo_electronico: '',
     ocupacion: '',
     asistencia: false,
     comida: false,
@@ -27,11 +28,11 @@ const FormularioUsuario = ({ selectedUser }) => {
       setUsuario({
         nombre: selectedUser.nombre,
         apellido: selectedUser.apellido,
-        telefono: selectedUser.telefono_movil,
-        correo: selectedUser.correo_electronico,
+        telefono_movil: selectedUser.telefono_movil,
+        correo_electronico: selectedUser.correo_electronico,
         ocupacion: selectedUser.ocupacion,
-        asistencia: !!selectedUser.asistencia,
-        comida: !!selectedUser.comida,
+        asistencia: Boolean(selectedUser.asistencia),  // Convertir a booleano
+        comida: Boolean(selectedUser.comida),  // Convertir a booleano
         carrera: selectedUser.carrera || '',
         universidad: selectedUser.universidad || '',
         organizacion: selectedUser.organizacion || '',
@@ -44,21 +45,33 @@ const FormularioUsuario = ({ selectedUser }) => {
     const { name, value, type, checked } = e.target;
     setUsuario({
       ...usuario,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'checkbox' ? Boolean(checked) : value,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // lógica para enviar la actualización
+    if (selectedUser) {
+      await axios.put(`/api/personas/${selectedUser.id_persona}`, usuario);
+    } else {
+      await axios.post('/api/personas', usuario);
+    }
+    fetchData();
+  };
+
+  const handleDelete = async () => {
+    if (selectedUser) {
+      await axios.delete(`/api/personas/${selectedUser.id_persona}`);
+      fetchData();
+    }
   };
 
   const handleClear = () => {
     setUsuario({
       nombre: '',
       apellido: '',
-      telefono: '',
-      correo: '',
+      telefono_movil: '',
+      correo_electronico: '',
       ocupacion: '',
       asistencia: false,
       comida: false,
@@ -95,19 +108,19 @@ const FormularioUsuario = ({ selectedUser }) => {
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
-            name="telefono"
+            name="telefono_movil"
             label="Teléfono Móvil"
             fullWidth
-            value={usuario.telefono}
+            value={usuario.telefono_movil}
             onChange={handleChange}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
-            name="correo"
+            name="correo_electronico"
             label="Correo Electrónico"
             fullWidth
-            value={usuario.correo}
+            value={usuario.correo_electronico}
             onChange={handleChange}
           />
         </Grid>
@@ -201,7 +214,7 @@ const FormularioUsuario = ({ selectedUser }) => {
           </Button>
         </Grid>
         <Grid item xs={12} sm={4}>
-          <Button variant="contained" color="secondary" fullWidth>
+          <Button variant="contained" color="secondary" fullWidth onClick={handleDelete}>
             Eliminar Registro
           </Button>
         </Grid>
