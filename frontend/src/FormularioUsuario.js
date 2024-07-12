@@ -6,14 +6,13 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import axios from 'axios';
 
-const FormularioUsuario = ({ selectedUser, fetchData }) => {
+const FormularioUsuario = ({ selectedUser }) => {
   const [usuario, setUsuario] = useState({
     nombre: '',
     apellido: '',
-    telefono_movil: '',
-    correo_electronico: '',
+    telefono: '',
+    correo: '',
     ocupacion: '',
     asistencia: false,
     comida: false,
@@ -28,11 +27,11 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
       setUsuario({
         nombre: selectedUser.nombre,
         apellido: selectedUser.apellido,
-        telefono_movil: selectedUser.telefono_movil,
-        correo_electronico: selectedUser.correo_electronico,
-        ocupacion: selectedUser.ocupacion,  // Asegurarse de que el valor de ocupacion se asigne correctamente
-        asistencia: selectedUser.asistencia,
-        comida: selectedUser.comida,
+        telefono: selectedUser.telefono_movil,
+        correo: selectedUser.correo_electronico,
+        ocupacion: selectedUser.ocupacion,
+        asistencia: !!selectedUser.asistencia,
+        comida: !!selectedUser.comida,
         carrera: selectedUser.carrera || '',
         universidad: selectedUser.universidad || '',
         organizacion: selectedUser.organizacion || '',
@@ -49,29 +48,17 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (selectedUser) {
-      await axios.put(`/api/personas/${selectedUser.id_persona}`, usuario);
-    } else {
-      await axios.post('/api/personas', usuario);
-    }
-    fetchData();
-  };
-
-  const handleDelete = async () => {
-    if (selectedUser) {
-      await axios.delete(`/api/personas/${selectedUser.id_persona}`);
-      fetchData();
-    }
+    // lógica para enviar la actualización
   };
 
   const handleClear = () => {
     setUsuario({
       nombre: '',
       apellido: '',
-      telefono_movil: '',
-      correo_electronico: '',
+      telefono: '',
+      correo: '',
       ocupacion: '',
       asistencia: false,
       comida: false,
@@ -108,19 +95,19 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
-            name="telefono_movil"
+            name="telefono"
             label="Teléfono Móvil"
             fullWidth
-            value={usuario.telefono_movil}
+            value={usuario.telefono}
             onChange={handleChange}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
-            name="correo_electronico"
+            name="correo"
             label="Correo Electrónico"
             fullWidth
-            value={usuario.correo_electronico}
+            value={usuario.correo}
             onChange={handleChange}
           />
         </Grid>
@@ -214,7 +201,7 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
           </Button>
         </Grid>
         <Grid item xs={12} sm={4}>
-          <Button variant="contained" color="secondary" fullWidth onClick={handleDelete}>
+          <Button variant="contained" color="secondary" fullWidth>
             Eliminar Registro
           </Button>
         </Grid>
