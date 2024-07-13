@@ -257,16 +257,37 @@ const FormularioUsuario = ({ selectedUser, fetchData, onClear }) => {
             label="Comida"
           />
         </Grid>
-        <Grid item xs={12} className="form-buttons">
-          <Button type="submit" variant="contained" fullWidth className="button-primary">
-            Enviar Actualización
-          </Button>
-          <Button variant="contained" onClick={handleDelete} fullWidth className="button-secondary">
-            Eliminar Registro
-          </Button>
-          <Button variant="contained" onClick={handleClear} fullWidth className="button-clear">
-            Limpiar Campos
-          </Button>
+        <Grid container spacing={2} style={{ padding  : '20px' }}>
+          <Grid item xs={12} sm={3}>
+            <Button
+              type="submit"
+              variant="contained"
+              style={{ backgroundColor: '#38de54', color: '#fff' }} // Verde
+              fullWidth
+            >
+              Enviar Actualización
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <Button
+              variant="contained"
+              style={{ backgroundColor: '#dc3545', color: '#fff' }} // Rojo
+              fullWidth
+              onClick={handleDelete}
+            >
+              Eliminar Registro
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <Button
+              variant="contained"
+              style={{ backgroundColor: '#ffc107', color: '#fff' }} // Amarillo
+              fullWidth
+              onClick={handleClear}
+            >
+              Limpiar Campos
+            </Button>
+          </Grid>
         </Grid>
       </Grid>
     </Box>
