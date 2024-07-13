@@ -33,7 +33,10 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-    if (err) throw err;
+    if (err) {
+        console.error('Error al conectar a la base de datos:', err);
+        return;
+    }
     console.log('Conectado a la base de datos MySQL.');
 });
 
@@ -46,25 +49,48 @@ io.on('connection', (socket) => {
 });
 
 const emitDataUpdate = () => {
-    const sql = `SELECT personas.*, estudiantes.carrera, estudiantes.universidad, profesionales.organizacion, profesionales.trabajo
-                FROM personas
-                LEFT JOIN estudiantes ON personas.id_persona = estudiantes.id_persona
-                LEFT JOIN profesionales ON personas.id_persona = profesionales.id_persona`;
+    const sql = `
+        SELECT p.id_persona, p.nombre, p.apellido, p.telefono_movil, p.correo_electronico, 
+               p.ocupacion, MAX(e.carrera) AS carrera, MAX(e.universidad) AS universidad, 
+               MAX(pr.organizacion) AS organizacion, MAX(pr.trabajo) AS trabajo,
+               p.asistencia, p.comida
+        FROM personas p
+        LEFT JOIN estudiantes e ON p.id_persona = e.id_persona
+        LEFT JOIN profesionales pr ON p.id_persona = pr.id_persona
+        GROUP BY p.id_persona, p.nombre, p.apellido, p.telefono_movil, p.correo_electronico, 
+                 p.ocupacion, p.asistencia, p.comida
+    `;
 
     db.query(sql, (err, results) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error al obtener datos:', err);
+            return;
+        }
+        console.log('Emitiendo actualización de datos:', results); 
         io.emit('updateData', results);
     });
 };
 
 app.get('/api/personas', (req, res) => {
-    const sql = `SELECT personas.*, estudiantes.carrera, estudiantes.universidad, profesionales.organizacion, profesionales.trabajo
-                FROM personas
-                LEFT JOIN estudiantes ON personas.id_persona = estudiantes.id_persona
-                LEFT JOIN profesionales ON personas.id_persona = profesionales.id_persona`;
+    const sql = `
+        SELECT p.id_persona, p.nombre, p.apellido, p.telefono_movil, p.correo_electronico, 
+               p.ocupacion, MAX(e.carrera) AS carrera, MAX(e.universidad) AS universidad, 
+               MAX(pr.organizacion) AS organizacion, MAX(pr.trabajo) AS trabajo,
+               p.asistencia, p.comida
+        FROM personas p
+        LEFT JOIN estudiantes e ON p.id_persona = e.id_persona
+        LEFT JOIN profesionales pr ON p.id_persona = pr.id_persona
+        GROUP BY p.id_persona, p.nombre, p.apellido, p.telefono_movil, p.correo_electronico, 
+                 p.ocupacion, p.asistencia, p.comida
+    `;
 
     db.query(sql, (err, results) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error al obtener datos:', err);
+            res.status(500).send('Error al obtener datos');
+            return;
+        }
+
         res.json(results);
     });
 });
@@ -75,20 +101,34 @@ app.post('/api/personas', (req, res) => {
                 VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
     db.query(sql, [nombre, apellido, telefono_movil, ocupacion, correo_electronico, asistencia, comida], (err, result) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error al insertar datos:', err);
+            res.status(500).send('Error al insertar datos');
+            return;
+        }
         const id_persona = result.insertId;
 
         if (ocupacion === 'estudiante') {
-            const sqlEstudiante = `INSERT INTO estudiantes (id_persona, carrera, universidad) VALUES (?, ?, ?)`;
+            const sqlEstudiante = `INSERT INTO estudiantes (id_persona, carrera, universidad) VALUES (?, ?, ?)
+                                   ON DUPLICATE KEY UPDATE carrera = VALUES(carrera), universidad = VALUES(universidad)`;
             db.query(sqlEstudiante, [id_persona, carrera, universidad], (err, result) => {
-                if (err) throw err;
+                if (err) {
+                    console.error('Error al insertar datos de estudiante:', err);
+                    res.status(500).send('Error al insertar datos de estudiante');
+                    return;
+                }
                 emitDataUpdate();
                 res.sendStatus(201);
             });
         } else if (ocupacion === 'profesional') {
-            const sqlProfesional = `INSERT INTO profesionales (id_persona, organizacion, trabajo) VALUES (?, ?, ?)`;
+            const sqlProfesional = `INSERT INTO profesionales (id_persona, organizacion, trabajo) VALUES (?, ?, ?)
+                                    ON DUPLICATE KEY UPDATE organizacion = VALUES(organizacion), trabajo = VALUES(trabajo)`;
             db.query(sqlProfesional, [id_persona, organizacion, trabajo], (err, result) => {
-                if (err) throw err;
+                if (err) {
+                    console.error('Error al insertar datos de profesional:', err);
+                    res.status(500).send('Error al insertar datos de profesional');
+                    return;
+                }
                 emitDataUpdate();
                 res.sendStatus(201);
             });
@@ -102,22 +142,36 @@ app.post('/api/personas', (req, res) => {
 app.put('/api/personas/:id', (req, res) => {
     const { id } = req.params;
     const { nombre, apellido, telefono_movil, ocupacion, correo_electronico, asistencia, comida, carrera, universidad, organizacion, trabajo } = req.body;
-    const sql = `UPDATE personas SET nombre = ?, apellido = ?, telefono_movil = ?, ocupacion = ?, correo_electronico = ?, asistencia = ?, comida = ? WHERE id_persona = ?`;
+    const sql = `UPDATE personas SET nombre = ?, apellido = ?, telefono_movil = ?, ocupacion = ?, correo_electronico = ?, asistencia = ?, comida = ?, actualizacion = 1 WHERE id_persona = ?`;
 
     db.query(sql, [nombre, apellido, telefono_movil, ocupacion, correo_electronico, asistencia, comida, id], (err, result) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error al actualizar datos:', err);
+            res.status(500).send('Error al actualizar datos');
+            return;
+        }
 
         if (ocupacion === 'estudiante') {
-            const sqlEstudiante = `REPLACE INTO estudiantes (id_persona, carrera, universidad) VALUES (?, ?, ?)`;
+            const sqlEstudiante = `INSERT INTO estudiantes (id_persona, carrera, universidad) VALUES (?, ?, ?)
+                                   ON DUPLICATE KEY UPDATE carrera = VALUES(carrera), universidad = VALUES(universidad)`;
             db.query(sqlEstudiante, [id, carrera, universidad], (err, result) => {
-                if (err) throw err;
+                if (err) {
+                    console.error('Error al actualizar datos de estudiante:', err);
+                    res.status(500).send('Error al actualizar datos de estudiante');
+                    return;
+                }
                 emitDataUpdate();
                 res.sendStatus(200);
             });
         } else if (ocupacion === 'profesional') {
-            const sqlProfesional = `REPLACE INTO profesionales (id_persona, organizacion, trabajo) VALUES (?, ?, ?)`;
+            const sqlProfesional = `INSERT INTO profesionales (id_persona, organizacion, trabajo) VALUES (?, ?, ?)
+                                    ON DUPLICATE KEY UPDATE organizacion = VALUES(organizacion), trabajo = VALUES(trabajo)`;
             db.query(sqlProfesional, [id, organizacion, trabajo], (err, result) => {
-                if (err) throw err;
+                if (err) {
+                    console.error('Error al actualizar datos de profesional:', err);
+                    res.status(500).send('Error al actualizar datos de profesional');
+                    return;
+                }
                 emitDataUpdate();
                 res.sendStatus(200);
             });
@@ -133,13 +187,17 @@ app.delete('/api/personas/:id', (req, res) => {
     const sql = `DELETE FROM personas WHERE id_persona = ?`;
 
     db.query(sql, [id], (err, result) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error al eliminar datos:', err);
+            res.status(500).send('Error al eliminar datos');
+            return;
+        }
         emitDataUpdate();
         res.sendStatus(200);
     });
 });
 
-// Servir los archivos estáticos de la aplicación React
+
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 app.get('*', (req, res) => {

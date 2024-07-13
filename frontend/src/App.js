@@ -36,8 +36,8 @@ const App = () => {
   };
 
   const clearSelection = () => {
-    setSelectedUser(null); // Deseleccionar la fila
-    setClearSelectionTrigger(prev => !prev); // Trigger para deseleccionar fila en TableComponent
+    setSelectedUser(null); 
+    setClearSelectionTrigger(prev => !prev); 
   };
 
   return (
