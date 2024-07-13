@@ -14,11 +14,12 @@ const socket = io('http://localhost:3001', {
 });
 
 const TableComponent = ({ filterColumn, filterValue, onRowSelect, clearSelectionTrigger, data }) => {
+  const [localData, setLocalData] = useState(data);
   const [selectedRow, setSelectedRow] = useState(null);
 
   useEffect(() => {
     socket.on('updateData', (updatedData) => {
-      setData(updatedData);
+      setLocalData(updatedData);
     });
 
     return () => {
@@ -32,21 +33,16 @@ const TableComponent = ({ filterColumn, filterValue, onRowSelect, clearSelection
     }
   }, [clearSelectionTrigger]);
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get('/api/personas');
-      setData(response.data);
-    } catch (error) {
-      console.error('Error al obtener datos:', error);
-    }
-  };
+  useEffect(() => {
+    setLocalData(data);
+  }, [data]);
 
   const handleRowClick = (row) => {
     setSelectedRow(row.id_persona);
     onRowSelect(row);
   };
 
-  const filteredData = data.filter((row) => {
+  const filteredData = localData.filter((row) => {
     if (!filterValue) return true;
     let cellValue = row[filterColumn] ? row[filterColumn].toString().toLowerCase() : '';
     if (filterColumn === 'asistencia' || filterColumn === 'comida') {
