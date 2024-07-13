@@ -20,8 +20,12 @@ const App = () => {
   }, []);
 
   const fetchData = async () => {
-    const response = await axios.get('http://localhost:3001/api/personas');
-    setData(response.data);
+    try {
+      const response = await axios.get('/api/personas');
+      setData(response.data);
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+    }
   };
 
   const handleColumnChange = (event) => {
