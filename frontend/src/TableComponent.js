@@ -6,10 +6,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import axios from 'axios';
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:3001', {
+const socket = io(process.env.NODE_ENV === 'production' ? 'https://registerwids.onrender.com' : 'http://localhost:3001', {
   transports: ['websocket', 'polling']
 });
 

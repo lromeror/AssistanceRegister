@@ -6,7 +6,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import axios from 'axios';
+import axios from './axiosConfig';
 
 const FormularioUsuario = ({ selectedUser, fetchData, onClear }) => {
   const [usuario, setUsuario] = useState({

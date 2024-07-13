@@ -5,7 +5,7 @@ import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Grid';
-import axios from 'axios';
+import axios from './axiosConfig'; // Importa tu configuración de Axios
 
 const App = () => {
   const [filterColumn, setFilterColumn] = useState('nombre');
@@ -20,7 +20,7 @@ const App = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/personas');
+      const response = await axios.get('/api/personas');
       setData(response.data);
     } catch (error) {
       console.error('Error al obtener datos:', error);
