@@ -6,7 +6,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import axios from './axiosConfig';
+import axios from 'axios';
+import './FormularioUsuario.css'; // Asegúrate de importar el archivo CSS
 
 const FormularioUsuario = ({ selectedUser, fetchData, onClear }) => {
   const [usuario, setUsuario] = useState({
@@ -256,18 +257,14 @@ const FormularioUsuario = ({ selectedUser, fetchData, onClear }) => {
             label="Comida"
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <Button type="submit" variant="contained" color="primary" fullWidth>
+        <Grid item xs={12} className="form-buttons">
+          <Button type="submit" variant="contained" fullWidth className="button-primary">
             Enviar Actualización
           </Button>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Button variant="contained" color="secondary" fullWidth onClick={handleDelete}>
+          <Button variant="contained" onClick={handleDelete} fullWidth className="button-secondary">
             Eliminar Registro
           </Button>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Button variant="contained" onClick={handleClear} fullWidth>
+          <Button variant="contained" onClick={handleClear} fullWidth className="button-clear">
             Limpiar Campos
           </Button>
         </Grid>

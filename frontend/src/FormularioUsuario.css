@@ -1,0 +1,23 @@
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 20px;
+  }
+  
+  .button-primary {
+    background-color: #38de54;
+    color: #fff;
+    margin-right: 10px;
+  }
+  
+  .button-secondary {
+    background-color: #dc3545;
+    color: #fff;
+    margin-right: 10px;
+  }
+  
+  .button-clear {
+    background-color: #ffc107;
+    color: #fff;
+  }
+  

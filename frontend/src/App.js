@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import TableComponent from './TableComponent';
 import FormularioUsuario from './FormularioUsuario';
+import Header from './Header'; 
 import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Grid';
-import axios from './axiosConfig'; // Importa tu configuración de Axios
+import axios from 'axios';
 
 const App = () => {
   const [filterColumn, setFilterColumn] = useState('nombre');
@@ -19,12 +20,8 @@ const App = () => {
   }, []);
 
   const fetchData = async () => {
-    try {
-      const response = await axios.get('/api/personas');
-      setData(response.data);
-    } catch (error) {
-      console.error('Error al obtener datos:', error);
-    }
+    const response = await axios.get('http://localhost:3001/api/personas');
+    setData(response.data);
   };
 
   const handleColumnChange = (event) => {
@@ -46,6 +43,7 @@ const App = () => {
 
   return (
     <Container>
+      <Header />  {/* Añade el componente de cabecera aquí */}
       <h1>Registro de Asistencia</h1>
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
