@@ -12,6 +12,7 @@ const App = () => {
   const [filterValue, setFilterValue] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [data, setData] = useState([]);
+  const [clearSelectionTrigger, setClearSelectionTrigger] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -32,6 +33,11 @@ const App = () => {
 
   const handleRowSelect = (user) => {
     setSelectedUser(user);
+  };
+
+  const clearSelection = () => {
+    setSelectedUser(null); // Deseleccionar la fila
+    setClearSelectionTrigger(prev => !prev); // Trigger para deseleccionar fila en TableComponent
   };
 
   return (
@@ -68,8 +74,13 @@ const App = () => {
           />
         </Grid>
       </Grid>
-      <TableComponent filterColumn={filterColumn} filterValue={filterValue} onRowSelect={handleRowSelect} />
-      <FormularioUsuario selectedUser={selectedUser} fetchData={fetchData} />
+      <TableComponent
+        filterColumn={filterColumn}
+        filterValue={filterValue}
+        onRowSelect={handleRowSelect}
+        clearSelectionTrigger={clearSelectionTrigger}
+      />
+      <FormularioUsuario selectedUser={selectedUser} fetchData={fetchData} onClear={clearSelection} />
     </Container>
   );
 };

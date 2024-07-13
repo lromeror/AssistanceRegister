@@ -13,14 +13,13 @@ const socket = io('http://localhost:3001', {
   transports: ['websocket', 'polling']
 });
 
-const TableComponent = ({ filterColumn, filterValue, onRowSelect }) => {
+const TableComponent = ({ filterColumn, filterValue, onRowSelect, clearSelectionTrigger }) => {
   const [data, setData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
 
   useEffect(() => {
     fetchData();
     socket.on('updateData', (updatedData) => {
-      console.log('Data received from WebSocket:', updatedData);
       setData(updatedData);
     });
 
@@ -28,6 +27,12 @@ const TableComponent = ({ filterColumn, filterValue, onRowSelect }) => {
       socket.off('updateData');
     };
   }, []);
+
+  useEffect(() => {
+    if (clearSelectionTrigger) {
+      setSelectedRow(null);
+    }
+  }, [clearSelectionTrigger]);
 
   const fetchData = async () => {
     const response = await axios.get('/api/personas');

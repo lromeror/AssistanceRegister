@@ -8,7 +8,7 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import axios from 'axios';
 
-const FormularioUsuario = ({ selectedUser, fetchData }) => {
+const FormularioUsuario = ({ selectedUser, fetchData, onClear }) => {
   const [usuario, setUsuario] = useState({
     nombre: '',
     apellido: '',
@@ -23,6 +23,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
     trabajo: ''
   });
 
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
     if (selectedUser) {
       setUsuario({
@@ -31,8 +33,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
         telefono_movil: selectedUser.telefono_movil,
         correo_electronico: selectedUser.correo_electronico,
         ocupacion: selectedUser.ocupacion,
-        asistencia: Boolean(selectedUser.asistencia),  // Convertir a booleano
-        comida: Boolean(selectedUser.comida),  // Convertir a booleano
+        asistencia: Boolean(selectedUser.asistencia),
+        comida: Boolean(selectedUser.comida),
         carrera: selectedUser.carrera || '',
         universidad: selectedUser.universidad || '',
         organizacion: selectedUser.organizacion || '',
@@ -47,22 +49,49 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
       ...usuario,
       [name]: type === 'checkbox' ? Boolean(checked) : value,
     });
+    setErrors({ ...errors, [name]: '' });
+  };
+
+  const validate = () => {
+    let tempErrors = {};
+    tempErrors.nombre = usuario.nombre ? "" : "Este campo es obligatorio.";
+    tempErrors.apellido = usuario.apellido ? "" : "Este campo es obligatorio.";
+    tempErrors.telefono_movil = usuario.telefono_movil ? "" : "Este campo es obligatorio.";
+    tempErrors.correo_electronico = usuario.correo_electronico ? "" : "Este campo es obligatorio.";
+    tempErrors.ocupacion = usuario.ocupacion ? "" : "Este campo es obligatorio.";
+
+    if (usuario.ocupacion === 'estudiante') {
+      tempErrors.carrera = usuario.carrera ? "" : "Este campo es obligatorio.";
+      tempErrors.universidad = usuario.universidad ? "" : "Este campo es obligatorio.";
+    }
+
+    if (usuario.ocupacion === 'profesional') {
+      tempErrors.organizacion = usuario.organizacion ? "" : "Este campo es obligatorio.";
+      tempErrors.trabajo = usuario.trabajo ? "" : "Este campo es obligatorio.";
+    }
+
+    setErrors(tempErrors);
+    return Object.values(tempErrors).every(x => x === "");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedUser) {
-      await axios.put(`/api/personas/${selectedUser.id_persona}`, usuario);
-    } else {
-      await axios.post('/api/personas', usuario);
+    if (validate()) {
+      if (selectedUser) {
+        await axios.put(`/api/personas/${selectedUser.id_persona}`, usuario);
+      } else {
+        await axios.post('/api/personas', usuario);
+      }
+      fetchData();
+      handleClear(); // Limpiar el formulario después de enviar
     }
-    fetchData();
   };
 
   const handleDelete = async () => {
     if (selectedUser) {
       await axios.delete(`/api/personas/${selectedUser.id_persona}`);
       fetchData();
+      handleClear(); // Limpiar el formulario después de eliminar
     }
   };
 
@@ -80,6 +109,7 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
       organizacion: '',
       trabajo: ''
     });
+    onClear(); // Llama a la función para deseleccionar la fila
   };
 
   return (
@@ -95,6 +125,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
             fullWidth
             value={usuario.nombre}
             onChange={handleChange}
+            error={!!errors.nombre}
+            helperText={errors.nombre}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -104,6 +136,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
             fullWidth
             value={usuario.apellido}
             onChange={handleChange}
+            error={!!errors.apellido}
+            helperText={errors.apellido}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -113,6 +147,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
             fullWidth
             value={usuario.telefono_movil}
             onChange={handleChange}
+            error={!!errors.telefono_movil}
+            helperText={errors.telefono_movil}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -122,6 +158,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
             fullWidth
             value={usuario.correo_electronico}
             onChange={handleChange}
+            error={!!errors.correo_electronico}
+            helperText={errors.correo_electronico}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -132,6 +170,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
             fullWidth
             value={usuario.ocupacion}
             onChange={handleChange}
+            error={!!errors.ocupacion}
+            helperText={errors.ocupacion}
           >
             <MenuItem value="">
               <em>Select...</em>
@@ -149,6 +189,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
                 fullWidth
                 value={usuario.carrera}
                 onChange={handleChange}
+                error={!!errors.carrera}
+                helperText={errors.carrera}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -158,6 +200,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
                 fullWidth
                 value={usuario.universidad}
                 onChange={handleChange}
+                error={!!errors.universidad}
+                helperText={errors.universidad}
               />
             </Grid>
           </>
@@ -171,6 +215,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
                 fullWidth
                 value={usuario.organizacion}
                 onChange={handleChange}
+                error={!!errors.organizacion}
+                helperText={errors.organizacion}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -180,6 +226,8 @@ const FormularioUsuario = ({ selectedUser, fetchData }) => {
                 fullWidth
                 value={usuario.trabajo}
                 onChange={handleChange}
+                error={!!errors.trabajo}
+                helperText={errors.trabajo}
               />
             </Grid>
           </>
