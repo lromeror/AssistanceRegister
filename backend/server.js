@@ -11,14 +11,14 @@ const port = 3001;
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://registerwids.onrender.com"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type"],
   }
 });
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: ["http://localhost:3000", "https://registerwids.onrender.com"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
 }));
@@ -90,7 +90,7 @@ app.get('/api/personas', (req, res) => {
             res.status(500).send('Error al obtener datos');
             return;
         }
-
+        console.log('Resultados obtenidos de la base de datos:', results);
         res.json(results);
     });
 });
@@ -196,7 +196,6 @@ app.delete('/api/personas/:id', (req, res) => {
         res.sendStatus(200);
     });
 });
-
 
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 

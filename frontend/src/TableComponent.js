@@ -13,12 +13,10 @@ const socket = io('http://localhost:3001', {
   transports: ['websocket', 'polling']
 });
 
-const TableComponent = ({ filterColumn, filterValue, onRowSelect, clearSelectionTrigger }) => {
-  const [data, setData] = useState([]);
+const TableComponent = ({ filterColumn, filterValue, onRowSelect, clearSelectionTrigger, data }) => {
   const [selectedRow, setSelectedRow] = useState(null);
 
   useEffect(() => {
-    fetchData();
     socket.on('updateData', (updatedData) => {
       setData(updatedData);
     });
@@ -35,8 +33,12 @@ const TableComponent = ({ filterColumn, filterValue, onRowSelect, clearSelection
   }, [clearSelectionTrigger]);
 
   const fetchData = async () => {
-    const response = await axios.get('/api/personas');
-    setData(response.data);
+    try {
+      const response = await axios.get('/api/personas');
+      setData(response.data);
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+    }
   };
 
   const handleRowClick = (row) => {

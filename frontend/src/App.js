@@ -19,8 +19,12 @@ const App = () => {
   }, []);
 
   const fetchData = async () => {
-    const response = await axios.get('http://localhost:3001/api/personas');
-    setData(response.data);
+    try {
+      const response = await axios.get('http://localhost:3001/api/personas');
+      setData(response.data);
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+    }
   };
 
   const handleColumnChange = (event) => {
@@ -79,6 +83,7 @@ const App = () => {
         filterValue={filterValue}
         onRowSelect={handleRowSelect}
         clearSelectionTrigger={clearSelectionTrigger}
+        data={data}
       />
       <FormularioUsuario selectedUser={selectedUser} fetchData={fetchData} onClear={clearSelection} />
     </Container>
