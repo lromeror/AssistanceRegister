@@ -1,0 +1,17 @@
+.center{
+    display: flex;
+    place-content: center;
+}
+*{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+.text_card{
+    font-size: larger;
+}
+
+.mt-50{
+    margin-top: 50px;
+}
