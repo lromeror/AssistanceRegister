@@ -48,7 +48,7 @@ const Sistema = () => {
   return (
     <Container>
       <Header />  {/* Añade el componente de cabecera aquí */}
-      <h1>Registro de Asistencia</h1>
+      <h1 className='mb-5'>Registro de Asistencia</h1>
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <TextField

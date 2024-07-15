@@ -34,11 +34,11 @@ export default function Newdata() {
 
     return (
         <div className="column_center">
-            <h2 className="text">NEW DATA</h2>
+            <h1>NEW DATA</h1>
             <div>
-                <FileInput id="single-file-upload" onChange={handleFileChange} />
+                <FileInput id="large-file-upload" sizing="lg"/>
             </div>
-            <Button onClick={handleSubmit} className="mt-4">Upload</Button>
+            <Button onClick={handleSubmit} className="mt-4 !bg-[#4caf50]" >Upload</Button>
         </div>
     );
 }
