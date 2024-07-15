@@ -5,22 +5,24 @@ const bodyParser = require('body-parser');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
-
+const multer = require('multer');
+const fs = require('fs');  // Para trabajar con el sistema de archivos
 const app = express();
 const port = 3001;
 const server = http.createServer(app);
+
 const io = socketIo(server, {
-  cors: {
-    origin: ["http://localhost:3000", "https://registerwids.onrender.com"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type"],
-  }
+    cors: {
+        origin: ["http://localhost:3000", "https://registerwids.onrender.com"],
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        allowedHeaders: ["Content-Type"],
+    }
 });
 
 app.use(cors({
-  origin: ["http://localhost:3000", "https://registerwids.onrender.com"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type"],
+    origin: ["http://localhost:3000", "https://registerwids.onrender.com"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type"],
 }));
 app.use(bodyParser.json());
 
@@ -66,7 +68,7 @@ const emitDataUpdate = () => {
             console.error('Error al obtener datos:', err);
             return;
         }
-        console.log('Emitiendo actualización de datos:', results); 
+        console.log('Emitiendo actualización de datos:', results);
         io.emit('updateData', results);
     });
 };
@@ -197,12 +199,42 @@ app.delete('/api/personas/:id', (req, res) => {
     });
 });
 
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// Configuración de Multer para guardar los archivos en una carpeta específica
+
+// Asegurarse de que la carpeta 'uploads' existe
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/'); // Carpeta donde se guardarán los archivos
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname); // Renombrar el archivo para evitar colisiones
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// Ruta para manejar la subida de archivos
+app.post('/upload', upload.single('file'), (req, res) => {
+    try {
+        res.send('Archivo subido exitosamente');
+    } catch (error) {
+        res.status(400).send('Error al subir el archivo');
+    }
+});
+
+app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+    res.sendFile(path.join(__dirname, '../frontend/public', 'index.html'));
 });
 
 server.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });
+
+
