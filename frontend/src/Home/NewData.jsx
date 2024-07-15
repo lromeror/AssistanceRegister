@@ -1,5 +1,5 @@
 import "./Styles/NewData.css";
-import { FileInput, Label, Button } from "flowbite-react";
+import { FileInput, Button } from "flowbite-react";
 import { useState } from "react";
 import axios from "axios";
 
@@ -34,9 +34,9 @@ export default function Newdata() {
 
     return (
         <div className="column_center">
-            <h1>NEW DATA</h1>
+            <h1 className="mb-5">NEW DATA</h1>
             <div>
-                <FileInput id="large-file-upload" sizing="lg"/>
+                <FileInput id="large-file-upload" sizing='lg'/>
             </div>
             <Button onClick={handleSubmit} className="mt-4 !bg-[#4caf50]" >Upload</Button>
         </div>
