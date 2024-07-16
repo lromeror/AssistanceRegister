@@ -6,7 +6,10 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const multer = require('multer');
-const fs = require('fs');  // Para trabajar con el sistema de archivos
+const fs = require('fs');  
+const csv = require('csv-parser');
+
+
 const app = express();
 const port = 3001;
 const server = http.createServer(app);
@@ -200,13 +203,14 @@ app.delete('/api/personas/:id', (req, res) => {
 });
 
 
-// Configuración de Multer para guardar los archivos en una carpeta específica
+// Configuración de Multer para guardar los archivos en una carpeta específica y filtrar solo archivos .csv
 
-// Asegurarse de que la carpeta 'uploads' existe
+// Asegúrate de que la carpeta 'uploads' existe
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/'); // Carpeta donde se guardarán los archivos
@@ -216,16 +220,58 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Solo se permiten archivos .csv'), false);
+    }
+};
 
-// Ruta para manejar la subida de archivos
+const upload = multer({ 
+    storage: storage,
+    fileFilter: fileFilter
+});
+
+// Ruta para manejar la subida de archivos y devolver todas las filas del archivo CSV
 app.post('/upload', upload.single('file'), (req, res) => {
     try {
-        res.send('Archivo subido exitosamente');
+        if (!req.file) {
+            console.log('No se subió ningún archivo o el archivo no es un .csv');
+            return res.status(400).send('No se subió ningún archivo o el archivo no es un .csv');
+        }
+        
+        const filePath = path.join(__dirname, 'uploads', req.file.filename);
+
+        const rows = [];
+        
+        // Crear un flujo de lectura para el archivo CSV
+        const stream = fs.createReadStream(filePath)
+            .pipe(csv());
+
+        // Leer las filas del archivo CSV
+        stream.on('data', (row) => {
+            rows.push(row);
+        });
+
+        // Manejar el fin del flujo de lectura
+        stream.on('end', () => {
+            res.json({ rows });
+        });
+
+        // Manejar errores durante la lectura del archivo
+        stream.on('error', (error) => {
+            console.error(`Error procesando el archivo: ${error.message}`);
+            res.status(500).send('Error procesando el archivo');
+        });
+
     } catch (error) {
+        console.error('Error al subir el archivo', error);
         res.status(400).send('Error al subir el archivo');
     }
 });
+
+
 
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
