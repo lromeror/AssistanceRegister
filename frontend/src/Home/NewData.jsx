@@ -1,11 +1,23 @@
 import "./Styles/NewData.css";
 import { FileInput, Button } from "flowbite-react";
-import { useState } from "react";
 import axios from "axios";
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import Grid from '@mui/material/Grid';
+import ColumnDropdown from './ColumnDropdown'; // Importa el nuevo componente
+
+const options = [
+    'Nombre',
+    'Apellido',
+    'Telefono_movil',
+    'Correo_electronico',
+    'Ocupacion',
+    'Carrera',
+    'Universidad',
+    'Organizacion',
+    'Trabajo',
+    'Asistencia',
+    'Comida'
+];
 
 export default function Newdata() {
     const [file, setFile] = useState(null);
@@ -49,11 +61,16 @@ export default function Newdata() {
                 <FileInput id="large-file-upload" sizing='lg' onChange={handleFileChange} />
             </div>
             <Button onClick={handleSubmit} className="mt-4 !bg-[#4caf50]">Upload</Button>
-            <div>
-            <div>
-                <h1>COLUMNAS DATASET</h1>
-            </div>
-            </div>
+            {columns.length > 0 && (
+                <div>
+                    <h1>COLUMNAS DATASET</h1>
+                    <Grid container spacing={2}>
+                        {columns.map((column, index) => (
+                            <ColumnDropdown key={index} column={column} options={options} />
+                        ))}
+                    </Grid>
+                </div>
+            )}
         </div>
     );
 }
