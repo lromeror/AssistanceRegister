@@ -95,7 +95,7 @@ app.get('/api/personas', (req, res) => {
             res.status(500).send('Error al obtener datos');
             return;
         }
-        console.log('Resultados obtenidos de la base de datos:', results);
+        //console.log('Resultados obtenidos de la base de datos:', results);
         res.json(results);
     });
 });
@@ -275,6 +275,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 async function processCSVRow(row) {
     const { nombre, apellido, telefono_movil, correo_electronico, ocupacion, carrera, universidad, organizacion, trabajo } = row;
+    // Log para depuración
+    console.log('Datos recibidos:', row);
 
     const [result] = await db.promise().query(
         `INSERT INTO personas (nombre, apellido, telefono_movil, ocupacion, correo_electronico) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), apellido=VALUES(apellido), telefono_movil=VALUES(telefono_movil), ocupacion=VALUES(ocupacion)`,
