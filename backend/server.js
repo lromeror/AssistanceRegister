@@ -158,7 +158,7 @@ app.put('/api/personas/:id', (req, res) => {
 
         if (ocupacion === 'estudiante') {
             const sqlEstudiante = `INSERT INTO estudiantes (id_persona, carrera, universidad) VALUES (?, ?, ?)
-                                   ON DUPLICATE KEY UPDATE carrera = VALUES(carrera), universidad = VALUES(universidad)`;
+                                ON DUPLICATE KEY UPDATE carrera = VALUES(carrera), universidad = VALUES(universidad)`;
             db.query(sqlEstudiante, [id, carrera, universidad], (err, result) => {
                 if (err) {
                     console.error('Error al actualizar datos de estudiante:', err);
@@ -236,27 +236,29 @@ const upload = multer({
 // Ruta para manejar la subida de archivos y devolver todas las filas del archivo CSV
 app.post('/upload', upload.single('file'), (req, res) => {
     try {
-        if (!req.file) {
+        if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.csv') {
             console.log('No se subió ningún archivo o el archivo no es un .csv');
             return res.status(400).send('No se subió ningún archivo o el archivo no es un .csv');
         }
-        
+
         const filePath = path.join(__dirname, 'uploads', req.file.filename);
 
-        const rows = [];
-        
         // Crear un flujo de lectura para el archivo CSV
         const stream = fs.createReadStream(filePath)
             .pipe(csv());
 
-        // Leer las filas del archivo CSV
-        stream.on('data', (row) => {
-            rows.push(row);
+        // Leer y procesar las filas del archivo CSV
+        stream.on('data', async (row) => {
+            try {
+                await processCSVRow(row);
+            } catch (error) {
+                console.error('Error al insertar los datos en la base de datos:', error);
+            }
         });
 
         // Manejar el fin del flujo de lectura
         stream.on('end', () => {
-            res.json({ rows });
+            res.status(201).send('Datos insertados correctamente');
         });
 
         // Manejar errores durante la lectura del archivo
@@ -266,11 +268,35 @@ app.post('/upload', upload.single('file'), (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al subir el archivo', error);
-        res.status(400).send('Error al subir el archivo');
+        console.error('Error al subir el archivo backend', error);
+        res.status(400).send('Error al subir el archivo backend');
     }
 });
 
+async function processCSVRow(row) {
+    const { nombre, apellido, telefono_movil, correo_electronico, ocupacion, carrera, universidad, organizacion, trabajo } = row;
+
+    const [result] = await db.promise().query(
+        `INSERT INTO personas (nombre, apellido, telefono_movil, ocupacion, correo_electronico) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), apellido=VALUES(apellido), telefono_movil=VALUES(telefono_movil), ocupacion=VALUES(ocupacion)`,
+        [nombre, apellido, telefono_movil, ocupacion, correo_electronico]
+    );
+
+    const id_persona = result.insertId || (await db.promise().query(
+        `SELECT id_persona FROM personas WHERE correo_electronico = ?`, [correo_electronico]
+    ))[0][0].id_persona;
+
+    if (ocupacion === 'Estudiante') {
+        await db.promise().query(
+            `INSERT INTO estudiantes (id_persona, carrera, universidad) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE carrera=VALUES(carrera), universidad=VALUES(universidad)`,
+            [id_persona, carrera, universidad]
+        );
+    } else if (ocupacion === 'Profesional') {
+        await db.promise().query(
+            `INSERT INTO profesionales (id_persona, organizacion, trabajo) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE organizacion=VALUES(organizacion), trabajo=VALUES(trabajo)`,
+            [id_persona, organizacion, trabajo]
+        );
+    }
+}
 
 
 app.use(express.static(path.join(__dirname, '../frontend/public')));
