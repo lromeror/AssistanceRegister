@@ -6,7 +6,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const multer = require('multer');
-const fs = require('fs');  
+const fs = require('fs');
 const csv = require('csv-parser');
 
 
@@ -228,12 +228,12 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     fileFilter: fileFilter
 });
 
-// Ruta para manejar la subida de archivos y devolver todas las filas del archivo CSV
+
 app.post('/upload', upload.single('file'), (req, res) => {
     try {
         if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.csv') {
@@ -242,23 +242,25 @@ app.post('/upload', upload.single('file'), (req, res) => {
         }
 
         const filePath = path.join(__dirname, 'uploads', req.file.filename);
-
-        // Crear un flujo de lectura para el archivo CSV
+        
         const stream = fs.createReadStream(filePath)
             .pipe(csv());
 
-        // Leer y procesar las filas del archivo CSV
-        stream.on('data', async (row) => {
-            try {
-                await processCSVRow(row);
-            } catch (error) {
-                console.error('Error al insertar los datos en la base de datos:', error);
-            }
+        const processRowPromises = [];
+
+        stream.on('data', (row) => {
+            processRowPromises.push(processCSVRow(row));
         });
 
         // Manejar el fin del flujo de lectura
-        stream.on('end', () => {
-            res.status(201).send('Datos insertados correctamente');
+        stream.on('end', async () => {
+            try {
+                await Promise.all(processRowPromises);
+                res.status(201).send('Datos insertados correctamente');
+            } catch (error) {
+                console.error('Error al insertar los datos en la base de datos:', error);
+                res.status(500).send('Error al procesar los datos');
+            }
         });
 
         // Manejar errores durante la lectura del archivo
@@ -273,10 +275,19 @@ app.post('/upload', upload.single('file'), (req, res) => {
     }
 });
 
+
 async function processCSVRow(row) {
-    const { nombre, apellido, telefono_movil, correo_electronico, ocupacion, carrera, universidad, organizacion, trabajo } = row;
-    // Log para depuración
-    console.log('Datos recibidos:', row);
+    const nombre = row['Nombres'] || '';
+    const apellido = row['Apellidos'] || '';
+    const telefono_movil = row['Teléfono (Móvil)'] || '';
+    const correo_electronico = row['Correo electrónico:'] || '';
+    const ocupacion = row['Ocupación'] || '';
+    const carrera = row['Carrera'] || '';
+    const universidad = row['Universidad'] || '';
+    const organizacion = row['Organización'] || '';
+    const trabajo = row['Trabajo'] || '';
+
+    console.log(`Nombre: ${nombre}, Apellido: ${apellido}, Teléfono: ${telefono_movil}, Correo Electrónico: ${correo_electronico}, Ocupación: ${ocupacion}, Carrera: ${carrera}, Universidad: ${universidad}, Organización: ${organizacion}, Trabajo: ${trabajo}`);
 
     const [result] = await db.promise().query(
         `INSERT INTO personas (nombre, apellido, telefono_movil, ocupacion, correo_electronico) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), apellido=VALUES(apellido), telefono_movil=VALUES(telefono_movil), ocupacion=VALUES(ocupacion)`,

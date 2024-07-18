@@ -2,9 +2,11 @@ import "./Styles/NewData.css";
 import { FileInput, Button } from "flowbite-react";
 import axios from "axios";
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 
 export default function Newdata() {
     const [file, setFile] = useState(null);
+    const navigate = useNavigate(); // Inicializa useNavigate
 
     const handleFileChange = (event) => {
         setFile(event.target.files[0]);
@@ -30,6 +32,7 @@ export default function Newdata() {
                 }
             });
             alert('Archivo subido y procesado correctamente');
+            navigate('/Sistem'); // Redirige a la página "/Sistem"
         } catch (error) {
             console.error('Error al subir el archivo frontend', error);
             alert('Error al subir el archivo frontend');
