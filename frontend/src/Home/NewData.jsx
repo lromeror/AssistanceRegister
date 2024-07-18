@@ -3,9 +3,11 @@ import { FileInput, Button } from "flowbite-react";
 import axios from "axios";
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
+import { PacmanLoader } from "react-spinners";
 
 export default function Newdata() {
     const [file, setFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate(); // Inicializa useNavigate
 
     const handleFileChange = (event) => {
@@ -25,6 +27,7 @@ export default function Newdata() {
         const formData = new FormData();
         formData.append('file', file);
 
+        setIsLoading(true);
         try {
             const response = await axios.post('http://localhost:3001/upload', formData, {
                 headers: {
@@ -32,10 +35,12 @@ export default function Newdata() {
                 }
             });
             alert('Archivo subido y procesado correctamente');
-            navigate('/Sistem'); // Redirige a la página "/Sistem"
+            navigate('/Sistem');
         } catch (error) {
             console.error('Error al subir el archivo frontend', error);
             alert('Error al subir el archivo frontend');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -46,6 +51,12 @@ export default function Newdata() {
                 <FileInput id="large-file-upload" sizing='lg' onChange={handleFileChange} />
             </div>
             <Button onClick={handleSubmit} className="mt-4 !bg-[#4caf50]">Upload</Button>
+            {isLoading && (
+                <div className="flex flex-col place-content-center place-items-center gap-10 py-10">
+                    <h1 className="font-bold text-4xl">CARGANDO INFORMACIÓN</h1>
+                    <PacmanLoader color="#4caf50" />
+                </div>)
+            }
         </div>
     );
 }
