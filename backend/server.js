@@ -7,8 +7,7 @@ const socketIo = require('socket.io');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const csv = require('csv-parser');
-
+const { spawn } = require('child_process');
 
 const app = express();
 const port = 3001;
@@ -202,7 +201,6 @@ app.delete('/api/personas/:id', (req, res) => {
     });
 });
 
-
 // Configuración de Multer para guardar los archivos en una carpeta específica y filtrar solo archivos .csv
 
 // Asegúrate de que la carpeta 'uploads' existe
@@ -233,7 +231,6 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-
 app.post('/upload', upload.single('file'), (req, res) => {
     try {
         if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.csv') {
@@ -242,31 +239,24 @@ app.post('/upload', upload.single('file'), (req, res) => {
         }
 
         const filePath = path.join(__dirname, 'uploads', req.file.filename);
-        
-        const stream = fs.createReadStream(filePath)
-            .pipe(csv());
 
-        const processRowPromises = [];
+        const pythonProcess = spawn('python', ['insert_data.py', filePath]);
 
-        stream.on('data', (row) => {
-            processRowPromises.push(processCSVRow(row));
+        pythonProcess.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
         });
 
-        // Manejar el fin del flujo de lectura
-        stream.on('end', async () => {
-            try {
-                await Promise.all(processRowPromises);
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`stderr: ${data}`);
+        });
+
+        pythonProcess.on('close', (code) => {
+            if (code === 0) {
+                emitDataUpdate();
                 res.status(201).send('Datos insertados correctamente');
-            } catch (error) {
-                console.error('Error al insertar los datos en la base de datos:', error);
+            } else {
                 res.status(500).send('Error al procesar los datos');
             }
-        });
-
-        // Manejar errores durante la lectura del archivo
-        stream.on('error', (error) => {
-            console.error(`Error procesando el archivo: ${error.message}`);
-            res.status(500).send('Error procesando el archivo');
         });
 
     } catch (error) {
@@ -274,43 +264,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
         res.status(400).send('Error al subir el archivo backend');
     }
 });
-
-
-async function processCSVRow(row) {
-    const nombre = row['Nombres'] || '';
-    const apellido = row['Apellidos'] || '';
-    const telefono_movil = row['Teléfono (Móvil)'] || '';
-    const correo_electronico = row['Correo electrónico:'] || '';
-    const ocupacion = row['Ocupación'] || '';
-    const carrera = row['Carrera'] || '';
-    const universidad = row['Universidad'] || '';
-    const organizacion = row['Organización'] || '';
-    const trabajo = row['Trabajo'] || '';
-
-    console.log(`Nombre: ${nombre}, Apellido: ${apellido}, Teléfono: ${telefono_movil}, Correo Electrónico: ${correo_electronico}, Ocupación: ${ocupacion}, Carrera: ${carrera}, Universidad: ${universidad}, Organización: ${organizacion}, Trabajo: ${trabajo}`);
-
-    const [result] = await db.promise().query(
-        `INSERT INTO personas (nombre, apellido, telefono_movil, ocupacion, correo_electronico) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), apellido=VALUES(apellido), telefono_movil=VALUES(telefono_movil), ocupacion=VALUES(ocupacion)`,
-        [nombre, apellido, telefono_movil, ocupacion, correo_electronico]
-    );
-
-    const id_persona = result.insertId || (await db.promise().query(
-        `SELECT id_persona FROM personas WHERE correo_electronico = ?`, [correo_electronico]
-    ))[0][0].id_persona;
-
-    if (ocupacion === 'Estudiante') {
-        await db.promise().query(
-            `INSERT INTO estudiantes (id_persona, carrera, universidad) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE carrera=VALUES(carrera), universidad=VALUES(universidad)`,
-            [id_persona, carrera, universidad]
-        );
-    } else if (ocupacion === 'Profesional') {
-        await db.promise().query(
-            `INSERT INTO profesionales (id_persona, organizacion, trabajo) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE organizacion=VALUES(organizacion), trabajo=VALUES(trabajo)`,
-            [id_persona, organizacion, trabajo]
-        );
-    }
-}
-
 
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
@@ -321,5 +274,3 @@ app.get('*', (req, res) => {
 server.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });
-
-
